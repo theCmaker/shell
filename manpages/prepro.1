@@ -1,0 +1,20 @@
+.TH PREPRO 1 "Avril 2013" "theCmaker's manpages 1.0" Commandes
+.SH NOM
+prepro \- Créer un fichier source en langage C.
+.SH SYNOPSIS
+\fBprepro\fP [\fISOURCE\fP][\fIHEADERS\fP]...
+.SH DESCRIPTION
+.\" Add any additional description here
+.PP
+Crée la trame d'un fichier source C, inclut les headers passés en paramètre après le nom.
+Si aucun paramètre n'est donné, aucun header ne pourra être lié automatiquement.
+Les extensions sont automatiquement ajoutées si nécessaire. 
+Si les fichiers n'existent pas, ils sont créés avec leur trame.
+.PP
+ATTENTION : si les fichiers existent, leur contenu est effacé.
+Cette commande est d'un usage préliminaire à la programmation.
+.SH AUTEUR
+Écrit par theCmaker.
+.SH "SIGNALER DES BOGUES"
+Signaler toute anomalie de prepro à pierre-loup.pissavy94@orange.fr
+ou bien sur <https://github.com/theCmaker/shell/issues>.
