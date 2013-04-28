@@ -10,6 +10,7 @@ function makeheader ()
   echo -e "#ifndef $header\n#define $header\n#endif" > $*
 }
 
+#main
 
 if [ $# == '0' ]; then
   read -p "Nom du fichier : " name
@@ -23,10 +24,7 @@ if [ `tail -c 2 <<<$name` != 'c' ]; then
 fi
 
 # Ecriture des headers standard
-echo "#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>"> $name
+echo -e "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>"> $name
 
 # Arguments - headers supplémentaires : -l
 arg='first' # Curseur 'argument' pour permettre l'inclusion du header éponyme
@@ -48,3 +46,5 @@ if [ $# -gt 1 ]; then
   fi;
   done;
 fi
+
+echo -e "\nint main (int argc, char ** argv)\n{\n\n}">> $name
