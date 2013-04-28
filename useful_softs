@@ -178,7 +178,7 @@ menu ()
   x. Tout installer [Système Virtuel],
   y. Tout installer [Système Natif],
   z. Quitter."
-  read -p "Votre reponse : " i
+  read -p "Votre réponse : " i
   echo "--------------------------------------------"
 
   case $i in 
