@@ -2,10 +2,10 @@
 
 if [ $# == '0' ]; then
   read -p "Nom du fichier : " name
-  read -p "Nom du header : " header
+  read -p "Descriptif du header : " header
 elif [ $# == '1' ]; then 
   name=$1
-  read -p "Nom du header : " header
+  read -p "Descriptif du header : " header
 elif [ $# == '2' ]; then
   name=$1
   header=$2 
