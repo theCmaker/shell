@@ -1,16 +1,7 @@
 [en]--More information about these scripts--
 
-
-Name		Use		State		Description/Details
-header		C Programmers	functionnal	generates a C header template
-prepro		C Programmers	functionnal	generates a C source file template (including links to local homemade headers)
-realmlist	WoW on Windows	not generic	changes the WoW realmlist according to the server you chose. To be developped
-useful_softs	Programmers	incomplete	softwares dedicated to programmers
+See <https://github.com/theCmaker/shell/wiki>
 
 [fr]--Plus d'infos sur ces scripts--
 
-Nom		Public			Etat		Détails
-header		Programmeurs C		Fonctionnel	prépare un header en C
-prepro		Programmeurs C		Fonctionnel	prépare un fichier source en C (avec headers locaux)
-realmlist	WoW Windows		Non générique	Change la realmlist selon le serveur privé choisi
-useful_softs	Programmeurs		Incomplet	Choix de logiciels utiles à la programmation.
+Voir <https://github.com/theCmaker/shell/wiki>
