@@ -1,0 +1,19 @@
+#! /bin/bash
+
+echo 'Choisir une entrée.
+1. Ysera
+2. Le Wyrmelin Argenté
+3. Autre'
+read reponse
+
+if [ "$reponse" = "1" ]; then
+echo 'set realmlist www.terre-ysera.com'>/cygdrive/c/Users/"Pierre-Loup"/"Saved Games"/"World of Warcraft"/Data/frFR/realmlist.wtf
+elif [ "$reponse" = "2" ]; then 
+echo 'set realmlist lewyrmelinargente.servegame.com'>/cygdrive/c/Users/"Pierre-Loup"/"Saved Games"/"World of Warcraft"/Data/frFR/realmlist.wtf
+elif [ "$reponse" = "3" ]; then
+echo "Adresse du serveur :"
+read adresse
+echo 'set realmlist '"$adresse" >/cygdrive/c/Users/"Pierre-Loup"/"Saved Games"/"World of Warcraft"/Data/frFR/realmlist.wtf
+else echo "mauvaise reponse"
+fi
+

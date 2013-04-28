@@ -1,0 +1,23 @@
+#! /bin/bash
+
+if [ $# == '0' ]; then
+  read -p "Nom du fichier : " name
+  read -p "Nom du header : " header
+elif [ $# == '1' ]; then 
+  name=$1
+  read -p "Nom du header : " header
+elif [ $# == '2' ]; then
+  name=$1
+  header=$2 
+else
+  echo "Too many arguments."
+  exit
+fi
+
+if [ `tail -c 2 <<<$name` != 'h' ]; then
+  name=`echo "$name.h"`
+fi
+
+header="`echo $header | tr '[a-z]' '[A-Z]'`_H__"
+header="`echo $header | tr ' ' '_'`"
+echo -e "#ifndef $header\n#define $header\n#endif" > $name
