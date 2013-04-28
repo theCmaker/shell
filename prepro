@@ -47,4 +47,4 @@ if [ $# -gt 1 ]; then
   done;
 fi
 
-echo -e "\nint main (int argc, char ** argv)\n{\n\n}">> $name
+echo -e "\nint main (int argc, char ** argv)\n{\n\nreturn 0;\n}">> $name
