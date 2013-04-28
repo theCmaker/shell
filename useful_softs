@@ -132,8 +132,8 @@ install_header ()
     cd /tmp;
     wget -q https://raw.github.com/theCmaker/shell/master/header;
     chmod 755 header;
-    mv header /usr/bin/;
-    echo "alias header='/usr/bin/header">> ~/.bashrc;
+    sudo mv header /usr/bin;
+    echo "alias header='sh /usr/bin/header">> ~/.bashrc;
     cd $i;;
   '') return 0;;
   [nN]) return 0;;
@@ -150,8 +150,8 @@ install_prepro ()
     cd /tmp;
     wget -q https://raw.github.com/theCmaker/shell/master/prepro;
     chmod 755 prepro;
-    mv prepro /usr/bin/;
-    echo "alias prepro='/usr/bin/prepro">> ~/.bashrc;
+    sudo mv prepro /usr/bin;
+    echo "alias prepro='sh /usr/bin/prepro">> ~/.bashrc;
     cd $i;;
   '') return 0;;
   [nN]) return 0;;
