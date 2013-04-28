@@ -75,7 +75,7 @@ install_tuareg ()
   case $tuaregmode in
   [oO]) i=`pwd`; 
     cd /tmp; 
-    wget http://www-rocq.inria.fr/~acohen/tuareg/mode/tuareg-mode.tar.gz; 
+    wget -q http://www-rocq.inria.fr/~acohen/tuareg/mode/tuareg-mode.tar.gz; 
     tar xvzf tuareg-mode.tar.gz; 
     mkdir -p ~/.emacs.d/tuareg; 
     cp ./tuareg*/*.el ~/.emacs.d/tuareg; 
@@ -88,6 +88,79 @@ install_tuareg ()
   return 0
 }
 
+install_manpagesfr ()
+{
+  read -p "Voulez-vous installer les pages du manuel en français ? (o/N) " manpagesfr
+  case $manpagesfr in
+  [oO]) sudo apt-get install manpages-fr-dev manpages-fr-extra;;
+  '') return 0;;
+  [nN]) return 0;;
+  esac
+  echo "Les pages françaises du manuel ont été installées."
+  return 0
+}
+
+install_git ()
+{
+  read -p "Voulez-vous installer Git ? (o/N) " gitinst
+  case $gitinst in
+  [oO]) sudo apt-get install git;;
+  '') return 0;;
+  [nN]) return 0;;
+  esac
+  echo "Git a été installé."
+  return 0
+}
+
+install_cmake ()
+{
+  read -p "Voulez-vous installer Cmake ? (o/N) " cmakeinst
+  case $cmakeinst in
+  [oO]) sudo apt-get install cmake;;
+  '') return 0;;
+  [nN]) return 0;;
+  esac
+  echo "Cmake a été installé."
+  return 0
+}
+
+install_header ()
+{
+  read -p "Voulez-vous installer le créateur de headers en langage C ? (o/N) " header
+  case $header in
+  [oO]) i=`pwd`;
+    cd /tmp;
+    wget -q https://raw.github.com/theCmaker/shell/master/header;
+    chmod 755 header;
+    mv header /usr/bin/;
+    echo "alias header='/usr/bin/header">> ~/.bashrc;
+    cd $i;;
+  '') return 0;;
+  [nN]) return 0;;
+  esac
+  echo -e "La commande header a été créée.\nLe terminal devra être relancé pour commencer à l'utiliser."
+  return 0
+}
+
+install_prepro ()
+{
+  read -p "Voulez-vous installer le créateur de fichiers source vierges en langage C ? (o/N) " prepro
+  case $prepro in
+  [oO]) i=`pwd`;
+    cd /tmp;
+    wget -q https://raw.github.com/theCmaker/shell/master/prepro;
+    chmod 755 prepro;
+    mv prepro /usr/bin/;
+    echo "alias prepro='/usr/bin/prepro">> ~/.bashrc;
+    cd $i;;
+  '') return 0;;
+  [nN]) return 0;;
+  esac
+  echo -e "La commande prepro a été créée.\nLe terminal devra être relancé pour commencer à l'utiliser."
+  return 0
+}
+
+
 menu ()
 {
   echo -e "--------------------------------------------\nChoisissez ce que vous voulez installer
@@ -97,9 +170,14 @@ menu ()
   4. [VIRTUAL OS ONLY] Accès au(x) dossier(s) de partage de VirtualBox,
   5. Editeur de texte emacs,
   6. Mode tuareg pour Emacs (OCaml),
-  7. Tout installer [Système Virtuel],
-  8. Tout installer [Système Natif],
-  9. Quitter."
+  7. Pages de manuel en français,
+  8. Git,
+  9. Cmake,
+ 10. Créateur de headers en langage C,
+ 11. Créateur de fichiers source vierges en langage C,
+  x. Tout installer [Système Virtuel],
+  y. Tout installer [Système Natif],
+  z. Quitter."
   read -p "Votre reponse : " i
   echo "--------------------------------------------"
 
@@ -110,9 +188,14 @@ menu ()
   '4') set_vbox_rights;;
   '5') install_emacs;;
   '6') install_tuareg;;
-  '7') install_kate; install_latex; install_aptfile; set_vbox_rights; install_emacs; install_tuareg;;
-  '8') install_kate; install_latex; install_aptfile; install_emacs; install_tuareg;;
-  '9') exit;; 
+  '7') install_manpagesfr;;
+  '8') install_git;;
+  '9') install_cmake;;
+  '10') install_header;;
+  '11') install_prepro;;
+  'x') install_kate; install_latex; install_aptfile; set_vbox_rights; install_emacs; install_tuareg; install_manpagesfr; install_git; install_cmake; install_header; install_prepro;;
+  'y') install_kate; install_latex; install_aptfile; install_emacs; install_tuareg; install_manpagesfr; install_git; install_cmake; install_header; install_prepro;;
+  'z') exit;; 
   *) echo "Mauvaise réponse."; menu ;; 
   esac
 
