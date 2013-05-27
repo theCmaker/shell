@@ -1,0 +1,9 @@
+#! /bin/bash
+ftp -n $2 <<EOD
+user $1
+cd rss
+delete "$3"
+cd ..
+rmdir rss
+bye
+EOD
