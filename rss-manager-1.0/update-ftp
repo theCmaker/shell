@@ -1,8 +1,0 @@
-#! /bin/bash
-ftp -n $2 <<EOD
-user $1
-cd rss
-!cd /tmp
-put "$3"
-bye
-EOD
