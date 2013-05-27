@@ -1,7 +1,7 @@
 #! /bin/bash
 read -p "Dossier d'installation (chemin absolu) : " path
 sudo cp -r rss-manager $path
-sudo chmod -r 700 $path/rss-manager
+sudo chmod -R 777 $path/rss-manager
 sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager
 echo "Fichiers copiés avec succès !"
 sleep 3
