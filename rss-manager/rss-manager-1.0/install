@@ -1,0 +1,10 @@
+#! /bin/bash
+read -p "Dossier d'installation (chemin absolu) : " path
+sudo cp -r rss-manager $path
+sudo chmod -R 777 $path/rss-manager
+sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager
+echo "Fichiers copiés avec succès !"
+sleep 3
+echo "alias rss-manager='$path/rss-manager/rss-manager'">> ~/.bashrc;
+echo "L'alias \"rss-manager\" a été créé. Il sera utilisable au prochain lancement du terminal."
+sleep 5
