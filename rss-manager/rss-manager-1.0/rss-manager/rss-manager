@@ -311,7 +311,7 @@ function update()
   echo "Recherche de version plus récente..."
   cd /tmp
   wget -q https://raw.github.com/theCmaker/shell/master/rss-manager/update;
-  last=`more update | cut -d ";" -f 1`
+  last=`more update | tail -n 1 | cut -d ";" -f 1`
   last_sec=`date -d "$last" +"%s"`
   install_date="aaaa-mm-jj"
   install_date_sec=`date -d $install_date +"%s"`
