@@ -318,7 +318,7 @@ function update()
   if [ $install_date_sec -lt $last_sec ] ; then
     wget -q 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
     tar -xvzf rss-manager.tar.gz*;
-    /tmp/rss-manager/install $folder ;
+    /tmp/install $folder ;
   else
     echo "La dernière version disponible est déjà installée.";
   fi
