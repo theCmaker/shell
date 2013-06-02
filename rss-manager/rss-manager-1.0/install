@@ -1,6 +1,6 @@
 #! /bin/bash
 if [ $# == '1' ] ; then #mise à jour
-  list=`ls rss-manager | sed "/^streams/d"`;
+  list=`ls $1 | sed "/^streams/d"`;
   sudo sed -i "/^.*install_date=\"aaaa-mm-jj\"/c\  install_date=\"`date +%F`\"" rss-manager/rss-manager; #inscrit la date d'installation
   sudo cp $list $1;
   cd $1;
@@ -9,7 +9,7 @@ else # remplacement intégral ou premiere installation
   read -p "Dossier d'installation (chemin absolu) : " path;
   sudo cp -r rss-manager $path;
   sudo chmod -R 777 $path/rss-manager;
-  sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager; #inscrit l'emplacement'
+  sudo sed -i "/^folder=.*$/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager; #inscrit l'emplacement'
   sudo sed -i "/^.*install_date=\"aaaa-mm-jj\"/c\  install_date=\"`date +%F`\"" $path/rss-manager/rss-manager; #inscrit la date d'installation
 fi
 echo "Fichiers copiés avec succès !"
