@@ -306,7 +306,23 @@ function menu() #main
   menu;
 }
 
-
+function update()
+{
+  echo "Recherche de version plus récente..."
+  cd /tmp
+  wget -q https://raw.github.com/theCmaker/shell/master/rss-manager/update;
+  last=`more update | cut -d ";" -f 1`
+  last_sec=`date -d "$last" +"%s"`
+  install_date="aaaa-mm-jj"
+  install_date_sec=`date -d $install_date +"%s"`
+  if [ $install_date_sec -lt $last_sec ] ; then
+    wget -q 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xvzf rss-manager.tar.gz;
+    /tmp/rss-manager/install $folder ;
+  else
+    echo "La dernière version disponible est déjà installée.";
+  fi
+}
 
 
 folder="/opt/lampp/htdocs/tests/rss_files" # dossier d'installation
@@ -317,6 +333,7 @@ if [ $# == 1 ] ; then # arguments à l'appel
     '-a') clear; submenu1; clear; ;;
     '-l') streamlist; read -p "Appuyer sur une touche pour continuer. " i; exit; ;;
     '-f') clear; submenu2; clear; ;;
+    '--update') clear; update; clear; exit; ;;
     *) echo "Invalid argument $1 !";;
   esac
 elif [ $# == 0 ] ; then #appel simple
