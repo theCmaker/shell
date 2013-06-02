@@ -1,7 +1,8 @@
 #! /bin/bash
 if [ $# == '1' ] ; then #mise à jour
-  list=`ls $1 | sed "/^streams/d"`;
+  list=`ls /tmp/rss-manager | sed "/^streams/d"`;
   sudo sed -i "/^.*install_date=\"aaaa-mm-jj\"/c\  install_date=\"`date +%F`\"" rss-manager/rss-manager; #inscrit la date d'installation
+  cd /tmp/rss-manager
   sudo cp $list $1;
   cd $1;
   sudo chmod -R 777 $list;
