@@ -315,7 +315,7 @@ function update()
   last_sec=`date -d "$last" +"%s"`
   install_date="aaaa-mm-jj"
   install_date_sec=`date -d $install_date +"%s"`
-  if [ $install_date_sec -lt $last_sec ] ; then
+  if [ $install_date_sec -le $last_sec ] ; then
     wget -rq 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
     tar -xvzf rss-manager.tar.gz*;
     /tmp/install $folder ;
