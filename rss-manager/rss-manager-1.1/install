@@ -1,7 +1,7 @@
 #! /bin/bash
 if [ $# == '1' ] ; then #mise à jour
   list=`ls /tmp/rss-manager | sed "/^streams/d"`;
-  sudo sed -i "/^.*install_date=\"aaaa-mm-jj\"/c\  install_date=\"`date +%F`\"" rss-manager/rss-manager; #inscrit la date d'installation
+  sudo sed -i "/^.*current_version=\"*\"/c\  current_version=\"1.1\"" rss-manager/rss-manager; #inscrit la version
   cd /tmp/rss-manager
   sudo cp $list $1;
   cd $1;
@@ -11,12 +11,12 @@ else # remplacement intégral ou premiere installation
   sudo cp -r rss-manager $path;
   sudo chmod -R 777 $path/rss-manager;
   sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager; #inscrit l'emplacement'
-  sudo sed -i "/^.*install_date=\"aaaa-mm-jj\"/c\  install_date=\"`date +%F`\"" $path/rss-manager/rss-manager; #inscrit la date d'installation
+  sudo sed -i "/^.*current_version=\"*\"/c\  current_version=\"1.1\"" rss-manager/rss-manager; #inscrit la version
 fi
 echo "Fichiers copiés avec succès !"
-sleep 3
+sleep 2
 if [ `more ~/.bashrc | grep rss-manager | wc -l` == '0' ] ; then #première installation
   echo "alias rss-manager='$path/rss-manager/rss-manager'">> ~/.bashrc;
   echo "L'alias \"rss-manager\" a été créé. Il sera utilisable au prochain lancement du terminal.";
-  sleep 5;
+  sleep 2;
 fi

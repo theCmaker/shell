@@ -33,20 +33,25 @@ function articledelete() # (nomFichier numeroFlux)
   server=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 4` #recupere adresse serveur
   user=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 10` #recupere utilisateur serveur
   cd /tmp
-  echo -e "Recuperation des contenus...\nConnexion au serveur..."
+  echo -e "Récupération des contenus...\nConnexion au serveur..."
   envoyer 4 "$user" "$server" "$1" #get-ftp ->recevoir
   line;
   echo "Liste des articles :"
   code_lines=$((`wc -l $1 | cut -d " " -f 1` - 7)); #recupere nombre de lignes de code pour les articles
   nb_articles=`more $1 | tail -n $code_lines | grep '<title>' | wc -l | cut -d " " -f 1`; #compte les articles
+  if [ $nb_articles == '0' ] ; then
+    echo "Il n'y a pas encore d'article." ;
+    sleep 3;
+    exit;
+  fi
   for i in $(seq 1 $nb_articles); do                                                      #affiche les articles ligne par ligne
     list=`more $1 | tail -n $code_lines | grep '<title>' | cut -d '<' -f 2 | cut -d '>' -f 2 | head -n $i | tail -n 1`; 
     echo "$i. $list"; 
   done;
   read -p "A supprimer : " todel
-  head -n $((7 + ($todel - 1) * 8)) $1 > /tmp/rss.xml #recupere le debut
-  tail -n $((3 + ($nb_articles - $todel) * 8 - 1)) /tmp/$1 >> /tmp/rss.xml #recupere la fin
-  mv /tmp/rss.xml $1 #renomme la copie et remplace l'original
+  head -n $((7 + ($todel - 1) * 8)) $1 > /tmp/rss000000000.xml #recupere le debut
+  tail -n $((3 + ($nb_articles - $todel) * 8 - 1)) /tmp/$1 >> /tmp/rss000000000.xml #recupere la fin
+  mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
   echo "5 secondes avant envoi, Ctrl+C pour annuler."
   echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
   echo "Connexion pour envoi..."
@@ -66,12 +71,30 @@ function createarticle() #(nomFichier numeroFluxPourPermalink)
   read -p "Titre : " titre
   read -p "URL (site ou carte GoogleMaps format court) : " address
   read -p "Description : " description
+  read -p "Visuel particulier (URL sinon laisser vide) : " picture
+  verif=false;
+  while [ $verif == false ] ; do
+    line;
+    echo -e "Que voulez-vous corriger ?\n1. Titre : $titre\n2. URL : $address\n3. Description : $description\n4. Visuel (Logo du flux si vide) : $visuel\n5. Rien, conserver tel quel."
+    read article_correction
+    case $article_correction in
+      '1') titre=`modify | tail -n 1` ;;
+      '2') address=`modify | tail -n 1` ;;
+      '3') description=`modify | tail -n 1` ;;
+      '4') visuel=`modify | tail -n 1` ;;
+      '5') verif=true ;;
+      *) echo "Réponse incorrecte !"; sleep 1; ;;
+    esac
+  done
   line;
+  if [ -z $picture ] ; then
+    picture=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 12` ; #recupere logo si pas de visuel précisé
+  fi
   permalink=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 6`
-  head -n 7 $1 > /tmp/rss.xml #recupere le debut
-  echo -e "<item>\n<title>$titre</title>\n<link>"$address"</link>\n<guid>$permalink</guid>\n<description>$description</description>\n<pubDate>`setdate;`</pubDate>\n</item>\n" >> /tmp/rss.xml #ecrit le nouvel article
-  tail -n $((`wc -l $1 | cut -d " " -f 1` - 7)) $1 >> /tmp/rss.xml # recupere la fin
-  mv /tmp/rss.xml $1 #renomme la copie et remplace l'original
+  head -n 7 $1 > /tmp/rss000000000.xml #recupere le debut
+  echo -e "<item>\n<title>$titre</title>\n<link>"$address"</link>\n<guid>$permalink</guid>\n<description>$description<![CDATA[<a href="$address"><img width='1' height='1' src="$picture" border="0"/></a>]]></description>\n<pubDate>`setdate;`</pubDate>\n</item>\n" >> /tmp/rss000000000.xml #ecrit le nouvel article
+  tail -n $((`wc -l $1 | cut -d " " -f 1` - 7)) $1 >> /tmp/rss000000000.xml # recupere la fin
+  mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
   echo "5 secondes avant envoi, Ctrl+C pour annuler."
   echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
   echo "Connexion pour envoi..." ;
@@ -118,15 +141,15 @@ function envoyer() # (mode user server file)
 
 
 #fonctions creation de flux
-function writechannel() #(file stream url description FTP user) from setchannel
+function writechannel() #(file stream url description FTP user logo) from setchannel
 {
   line;
-  echo -e "Nom de fichier : $1\nTitre du flux : $2\nURL : $3\nDescription : $4\nFTP : $5\nUtilisateur FTP : $6"
+  echo -e "Nom de fichier : $1\nTitre du flux : $2\nURL : $3\nDescription : $4\nFTP : $5\nUtilisateur FTP : $6\nLogo : $7"
   read -p "Ces informations sont-elles correctes ? (o/N) " okay
   line;
   case $okay in
-  [oO]) echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rss version=\"2.0\">\n<channel>\n<title>$2</title>\n<link>$3</link>\n<description>$4</description>\n\n</channel>\n</rss>"> /tmp/`echo $1`.xml; #Ecriture de la trame principale
-        echo -e "\nname%$2% ftp%$5% http%$3% file%$1.xml% user%$6%" >> $folder/streams;
+  [oO]) echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rss version=\"2.0\">\n<channel>\n<title>$2</title>\n<link>$3</link>\n<description>$4</description><image><title /><url>$7</url><link>$3</link></image>\n\n</channel>\n</rss>"> /tmp/`echo $1`.xml; #Ecriture de la trame principale
+        echo -e "\nname%$2% ftp%$5% http%$3% file%$1.xml% user%$6% logo%$7%" >> $folder/streams;
         sed -i '/^$/d' $folder/streams;
         echo "5 secondes avant envoi, Ctrl+C pour annuler."
         echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
@@ -135,8 +158,8 @@ function writechannel() #(file stream url description FTP user) from setchannel
         echo "Flux \"$2\" créé et uploadé avec succès !";
         sleep 3; ;;
 
-  ''|[nN]) one="$1" ; two="$2" ; three="$3" ; four="$4" ; five="$5" ; six="$6" ;  #correction demandée
-      echo -e "Correction :\n1. Nom de fichier\n2. Titre\n3. URL\n4. Description\n5. FTP"
+  ''|[nN]) one="$1" ; two="$2" ; three="$3" ; four="$4" ; five="$5" ; six="$6" ; seven="$7" ;  #correction demandée
+      echo -e "Correction :\n1. Nom de fichier\n2. Titre\n3. URL\n4. Description\n5. FTP\n6. Utilisateur FTP\n7. Logo"
       read -p "Votre choix : " correc
       line;
       case $correc in
@@ -146,10 +169,11 @@ function writechannel() #(file stream url description FTP user) from setchannel
         '4') four=`modify | tail -n 1` ;;
         '5') five=`modify | tail -n 1` ;;
         '6') six=`modify | tail -n 1` ;;
+        '7') seven=`modify | tail -n 1` ;;
       esac
-      writechannel "$one" "$two" "$three" "$four" "$five" "$six" ;; # erreur ou vérification
+      writechannel "$one" "$two" "$three" "$four" "$five" "$six" "$seven" ;; # erreur ou vérification
 
-  *) echo "Réponse incorrecte." ; sleep 1 ; writechannel "$1" "$2" "$3" "$4" "$5" "$6"; ;; #cas d'erreur
+  *) echo "Réponse incorrecte." ; sleep 1 ; writechannel "$1" "$2" "$3" "$4" "$5" "$6" "$7"; ;; #cas d'erreur
   esac
 }
 
@@ -160,10 +184,11 @@ function setchannel() # (file) from createstream
   read -p "Description du flux : " description
   read -p "Serveur FTP : " ftp
   read -p "Nom d'utilisateur pour le serveur FTP : " user
+  read -p "URL du logo : " logo
   if [ $# == '1' ] ; then
-    writechannel "$1" "$titre" "$url" "$description" "$ftp" "$user";
+    writechannel "$1" "$titre" "$url" "$description" "$ftp" "$user" "$logo";
   else
-    echo -e "\nname%$titre% ftp%$ftp% http%$url% file%$1.xml% user%$user%" >> $folder/streams;
+    echo -e "\nname%$titre% ftp%$ftp% http%$url% file%$1.xml% user%$user% logo%$logo%" >> $folder/streams;
     sed -i '/^$/d' $folder/streams;
     echo "Flux \"$titre\" ajouté !"
     sleep 3;
@@ -303,6 +328,7 @@ function menu() #main
     '3') clear; exit; ;;
     *) echo "Réponse incorrecte." ; sleep 1 ; menu; ;;
   esac
+  rm /tmp/*.xml;
   menu;
 }
 
@@ -311,13 +337,15 @@ function update()
   echo "Recherche de version plus récente..."
   cd /tmp
   wget -rq https://raw.github.com/theCmaker/shell/master/rss-manager/update;
-  last=`more update | cut -sd ";" -f 1 | tail -n 1`
-  last_sec=`date -d "$last" +"%s"`
-  install_date="aaaa-mm-jj"
-  install_date_sec=`date -d $install_date +"%s"`
-  if [ $install_date_sec -le $last_sec ] ; then
+  last_version=`more update | cut -sd ":" -f 1 | tail -n 1`
+  current_version="x"
+  if [ `echo $last_version | cut -c 1` -gt `echo $current_version | cut -c 1` ] ; then
     wget -rq 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
-    tar -xvzf rss-manager.tar.gz*;
+    tar -xzf rss-manager.tar.gz*;
+    /tmp/install $folder ;
+  elif [ `echo $last_version | cut -c 3` -gt `echo $current_version | cut -c 3` ] ; then
+    wget -rq 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xzf rss-manager.tar.gz*;
     /tmp/install $folder ;
   else
     echo "La dernière version disponible est déjà installée.";
@@ -329,11 +357,11 @@ folder="/opt/lampp/htdocs/tests/rss_files" # dossier d'installation
 nb_stream=$((`wc -l $folder/streams | cut -d " " -f 1`)) #nombre de flux
 
 if [ $# == 1 ] ; then # arguments à l'appel
-  case $1 in 
+  case $1 in
     '-a') clear; submenu1; clear; ;;
     '-l') streamlist; read -p "Appuyer sur une touche pour continuer. " i; exit; ;;
     '-f') clear; submenu2; clear; ;;
-    '--update') clear; update; clear; exit; ;;
+    '--update') clear; update; sleep 3; clear; exit; ;;
     *) echo "Invalid argument $1 !";;
   esac
 elif [ $# == 0 ] ; then #appel simple
