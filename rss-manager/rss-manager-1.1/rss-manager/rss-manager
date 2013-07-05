@@ -50,7 +50,7 @@ function articledelete() # (nomFichier numeroFlux)
   done;
   read -p "A supprimer : " articledelete_todel
   head -n $((7 + ($articledelete_todel - 1) * 8)) $1 > /tmp/rss000000000.xml #recupere le debut
-  tail -n $((3 + ($articledelete_nb_articles - $todel) * 8 - 1)) /tmp/$1 >> /tmp/rss000000000.xml #recupere la fin
+  tail -n $((3 + ($articledelete_nb_articles - $articledelete_todel) * 8 - 1)) /tmp/$1 >> /tmp/rss000000000.xml #recupere la fin
   mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
   echo "5 secondes avant envoi, Ctrl+C pour annuler."
   echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
