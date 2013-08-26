@@ -8,7 +8,7 @@ function line()
 
 
 
-function modify() #pas d'argument ; from writechannel
+function modify() #pas d'argument ; from writechannel or createarticle
 {
   line;
   read -p "Nouvelle version : " modify_new
@@ -92,7 +92,7 @@ function createarticle() #(nomFichier numeroFluxPourPermalink)
   fi
   createarticle_permalink=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 6`
   head -n 7 $1 > /tmp/rss000000000.xml #recupere le debut
-  echo -e "<item>\n<title>$createarticle_titre</title>\n<link>"$createarticle_address"</link>\n<guid>$createarticle_permalink</guid>\n<description>$createarticle_description<![CDATA[<a href="$createarticle_address"><img width='1' height='1' src="$createarticle_picture" border="0"/></a>]]></description>\n<pubDate>`setdate;`</pubDate>\n</item>\n" >> /tmp/rss000000000.xml #ecrit le nouvel article
+  echo -e "<item>\n<title>$createarticle_titre</title>\n<link>"$createarticle_address"</link>\n<guid>$createarticle_permalink</guid>\n<description>$createarticle_description</description><image><url>$createarticle_picture</url></image>\n<pubDate>`setdate;`</pubDate>\n</item>\n" >> /tmp/rss000000000.xml #ecrit le nouvel article
   tail -n $((`wc -l $1 | cut -d " " -f 1` - 7)) $1 >> /tmp/rss000000000.xml # recupere la fin
   mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
   echo "5 secondes avant envoi, Ctrl+C pour annuler."

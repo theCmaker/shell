@@ -1,7 +1,6 @@
 #! /bin/bash
 if [ $# == '1' ] ; then #mise à jour
   list=`ls /tmp/rss-manager | sed "/^streams/d"`;
-  sudo sed -i "/^.*update_current_version=\"*\"/c\ update_current_version=\"1.1\"" rss-manager/rss-manager; #inscrit la version
   cd /tmp/rss-manager
   sudo cp $list $1;
   cd $1;
@@ -11,7 +10,6 @@ else # remplacement intégral ou premiere installation
   sudo cp -r rss-manager $path;
   sudo chmod -R 777 $path/rss-manager;
   sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager; #inscrit l'emplacement'
-  sudo sed -i "/^.*update_current_version=\"*\"/c\ update_current_version=\"1.1\"" rss-manager/rss-manager; #inscrit la version
 fi
 echo "Fichiers copiés avec succès !"
 sleep 2
