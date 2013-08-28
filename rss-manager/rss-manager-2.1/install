@@ -5,6 +5,7 @@ if [ $# == '1' ] ; then #mise à jour
   sudo cp $list $1;
   cd $1;
   sudo chmod -R 777 $list;
+  sudo sed -i "/^folder=*/cfolder='$1'" $1/rss-manager; #inscrit l'emplacement'
 else # remplacement intégral ou premiere installation
   read -p "Dossier d'installation (chemin absolu) : " path;
   sudo cp -r rss-manager $path;
