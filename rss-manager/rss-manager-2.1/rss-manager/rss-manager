@@ -340,7 +340,7 @@ function update()
   update_last_version=`more update | cut -sd ":" -f 1 | tail -n 1`
   update_current_version="2.1"
   if [ `echo $update_last_version | cut -c 1` -gt `echo $update_current_version | cut -c 1` ] ; then
-    wget -q -O 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    wget -q -O '/tmp/rss-manager.tar.gz' 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
     tar -xzf rss-manager.tar.gz;
     chmod 777 /tmp/install;
     /tmp/install $folder ;
