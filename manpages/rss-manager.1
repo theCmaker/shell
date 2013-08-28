@@ -1,0 +1,35 @@
+.TH HEADER 1 "Aout 2013" "theCmaker's manpages 1.0" Commandes
+.SH NOM
+rss-manager \- Gérer des flux RSS.
+.SH SYNOPSIS
+\fBrss-manager\fP [\fB\-a\fP|\fB\-f\fP|\fB\-l\fP|\fB\--update\fP\|\fB\--version\fP\|]
+.SH DESCRIPTION
+.\" Add any additional description here
+.PP
+Lance le gestionnaire de flux RSS.
+On peut ne pas donner de paramètre.
+Les fichiers .xml sont placés dans un dossier "rss" à la racine du point de connexion FTP. Il est créé si nécessaire.
+Toutes les informations concernant les flux (excepté le mot de passe FTP) sont stockées dans le fichier "streams".
+.PP
+ATTENTION : si les fichiers existent, leur contenu est effacé.
+.SH EXEMPLES
+.TP  \w'rss-manager\ 'u
+\fBrss-manager \-a\fP
+Affiche directement le menu concernant les articles.
+.TP 
+\fBrss-manager \-f\fP
+Affiche directement le menu concernant les flux.
+.TP 
+\fBrss-manager \-l\fP
+Affiche la liste des flux gérés par rss-manager.
+.TP 
+\fBrss-manager\ \-\-update\fP
+Lance la mise à jour du programme.
+.TP 
+\fBrss-manager\ \-\-version\fP
+Donne la version du programme.
+.SH AUTEUR
+Écrit par theCmaker.
+.SH "SIGNALER DES BOGUES"
+Signaler toute anomalie de header à pierre-loup.pissavy94@orange.fr
+ou bien sur <https://github.com/theCmaker/shell/issues>.
