@@ -336,16 +336,18 @@ function update()
 {
   echo "Recherche de version plus récente..."
   cd /tmp
-  wget -q https://raw.github.com/theCmaker/shell/master/rss-manager/update;
+  wget -q -O 'update' 'https://raw.github.com/theCmaker/shell/master/rss-manager/update';
   update_last_version=`more update | cut -sd ":" -f 1 | tail -n 1`
   update_current_version="2.1"
   if [ `echo $update_last_version | cut -c 1` -gt `echo $update_current_version | cut -c 1` ] ; then
-    wget -q 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
-    tar -xzf rss-manager.tar.gz*;
+    wget -q -O 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xzf rss-manager.tar.gz;
+    chmod 777 /tmp/install;
     /tmp/install $folder ;
   elif [ `echo $update_last_version | cut -c 3` -gt `echo $update_current_version | cut -c 3` ] ; then
-    wget -q 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
-    tar -xzf rss-manager.tar.gz*;
+    wget -q -O '/tmp/rss-manager.tar.gz' 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xzf rss-manager.tar.gz;
+    chmod 777 /tmp/install;
     /tmp/install $folder ;
   else
     echo "La dernière version disponible est déjà installée.";
