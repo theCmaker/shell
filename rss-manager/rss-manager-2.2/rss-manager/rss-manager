@@ -1,0 +1,380 @@
+#! /bin/bash
+
+#fonctions et variables communes
+function line()
+{
+  echo "--------------------------------------------------------------------------------"
+}
+
+
+
+function modify() #pas d'argument ; from writechannel or createarticle
+{
+  line;
+  read -p "Nouvelle version : " modify_new
+  echo "$modify_new" >&1; #redirige la reponse
+}
+
+
+
+#fonctions fichiers locaux
+function streamlist() #pas d'argument
+{
+  nb_stream=$((`wc -l $folder/streams | cut -d " " -f 1`)) #nombre de flux
+  echo "Liste des flux :"
+  for i in $(seq 1 $nb_stream); do #variable globale
+  streamlist_stream=`more $folder/streams | head -n $i | tail -n 1 | cut -d % -f 2`; #recupere le nom du flux sur la ligne dans streams
+  echo "$i. $streamlist_stream";
+  done
+}
+
+function articledelete() # (nomFichier numeroFlux)
+{
+  articledelete_server=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 4` #recupere adresse serveur
+  articledelete_user=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 10` #recupere utilisateur serveur
+  articledelete_path=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 14` #recupere chemin serveur
+  cd /tmp
+  echo -e "Récupération des contenus...\nConnexion au serveur..."
+  envoyer 4 "$articledelete_user" "$articledelete_server" "$1" "$articledelete_path" #get-ftp ->recevoir
+  line;
+  echo "Liste des articles :"
+  articledelete_code_lines=$((`wc -l $1 | cut -d " " -f 1` - 7)); #recupere nombre de lignes de code pour les articles
+  articledelete_nb_articles=`more $1 | tail -n $articledelete_code_lines | grep '<title>' | wc -l | cut -d " " -f 1`; #compte les articles
+  if [ $articledelete_nb_articles == '0' ] ; then
+    echo "Il n'y a pas encore d'article." ;
+    sleep 3;
+    exit;
+  fi
+  for i in $(seq 1 $articledelete_nb_articles); do                                                      #affiche les articles ligne par ligne
+    articledelete_list=`more $1 | tail -n $articledelete_code_lines | grep '<title>' | cut -d '<' -f 2 | cut -d '>' -f 2 | head -n $i | tail -n 1`;
+    echo "$i. $articledelete_list";
+  done;
+  read -p "A supprimer : " articledelete_todel
+  head -n $((7 + ($articledelete_todel - 1) * 8)) $1 > /tmp/rss000000000.xml #recupere le debut
+  tail -n $((3 + ($articledelete_nb_articles - $articledelete_todel) * 8 - 1)) /tmp/$1 >> /tmp/rss000000000.xml #recupere la fin
+  mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
+  echo "5 secondes avant envoi, Ctrl+C pour annuler."
+  echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
+  echo "Connexion pour envoi..."
+  envoyer 3 "$articledelete_user" "$articledelete_server" "$1" "$articledelete_path" #update-ftp
+  echo "Suppression effectuée !"
+  sleep 3
+}
+
+function createarticle() #(nomFichier numeroFluxPourPermalink)
+{
+  createarticle_server=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 4` #recupere adresse serveur
+  createarticle_user=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 10` #recupere utilisateur serveur
+  createarticle_path=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 14` #recupere chemin serveur
+  cd /tmp #repertoire de travail
+  echo "Récupération des contenus..."
+  envoyer 4 "$createarticle_user" "$createarticle_server" "$1" "$createarticle_path" #get-ftp
+  line;
+  read -p "Titre : " createarticle_titre
+  read -p "URL (site ou carte GoogleMaps format court) : " createarticle_address
+  read -p "Description : " createarticle_description
+  read -p "Visuel particulier (URL sinon laisser vide) : " createarticle_picture
+  createarticle_verif=false;
+  while [ $createarticle_verif == false ] ; do
+    line;
+    echo -e "Que voulez-vous corriger ?\n1. Titre : $createarticle_titre\n2. URL : $createarticle_address\n3. Description : $createarticle_description\n4. Visuel (Logo du flux si vide) : $createarticle_visuel\n5. Rien, conserver tel quel."
+    read createarticle_article_correction
+    case $createarticle_article_correction in
+      '1') createarticle_titre=`modify | tail -n 1` ;;
+      '2') createarticle_address=`modify | tail -n 1` ;;
+      '3') createarticle_description=`modify | tail -n 1` ;;
+      '4') createarticle_visuel=`modify | tail -n 1` ;;
+      '5') createarticle_verif=true ;;
+      *) echo "Réponse incorrecte !"; sleep 1; ;;
+    esac
+  done
+  line;
+  if [ -z $createarticle_picture ] ; then
+    createarticle_picture=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 12` ; #recupere logo si pas de visuel précisé
+  fi
+  createarticle_permalink=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 6`
+  head -n 7 $1 > /tmp/rss000000000.xml #recupere le debut
+  echo -e "<item>\n<title>$createarticle_titre</title>\n<link>"$createarticle_address"</link>\n<guid>$createarticle_permalink</guid>\n<description>$createarticle_description</description><image><url>$createarticle_picture</url></image>\n<pubDate>`setdate;`</pubDate>\n</item>\n" >> /tmp/rss000000000.xml #ecrit le nouvel article
+  tail -n $((`wc -l $1 | cut -d " " -f 1` - 7)) $1 >> /tmp/rss000000000.xml # recupere la fin
+  mv /tmp/rss000000000.xml $1 #renomme la copie et remplace l'original
+  echo "5 secondes avant envoi, Ctrl+C pour annuler."
+  echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
+  echo "Connexion pour envoi..." ;
+  envoyer 3 "$createarticle_user" "$createarticle_server" "$1" "$createarticle_path"; #update-ftp
+  echo "Article publié !" ;
+  sleep 3 ;
+}
+
+
+
+#fonctions mise a jour de flux
+function setdate()
+{
+  setdate_date=`date -R --utc | cut -c 1-25`
+  setdate_day=`echo $setdate_date | cut -c 6`
+  setdate_final=UTC
+  if [ '$date' != '0' ] ; then
+    setdate_final=`echo "$setdate_date UTC"`
+  else
+    setdate_final=`echo $setdate_date | cut -c 1-5; echo $setdate_date | cut -c 7-25; echo " UTC"`;
+  fi
+  echo $setdate_final #retour au format rfc822 conforme aux rss
+}
+
+function manage_article() # (1-ecrire|2-supprimer numeroFlux)
+{
+  manage_article_stream=`more $folder/streams | head -n $2 | tail -n 1 | cut -d % -f 8` #nom du fichier
+  case $1 in
+    '1') createarticle $manage_article_stream $2; ;; #nomFichier numeroFluxPourPermalink
+    '2') articledelete $manage_article_stream $2; ;; #nomFichier numeroFlux
+  esac
+}
+
+function envoyer() # (mode user server file path)
+{
+  case $1 in
+    '1') cd /tmp ; $folder/send-ftp "$2" "$3" "$4" "$5" ;; #creation
+    '2') cd /tmp ; $folder/remove-ftp "$2" "$3" "$4" "$5";; #suppression
+    '3') cd /tmp ; $folder/update-ftp "$2" "$3" "$4" "$5";; #upload
+    '4') cd /tmp ; $folder/get-ftp "$2" "$3" "$4" "$5";; #download
+  esac
+}
+
+
+
+#fonctions creation de flux
+function writechannel() #(file stream url description FTP user logo path) from setchannel
+{
+  line;
+  echo -e "Nom de fichier : $1\nTitre du flux : $2\nURL : $3\nDescription : $4\nFTP : $5\nUtilisateur FTP : $6\nLogo : $7\nChemin FTP : $8"
+  read -p "Ces informations sont-elles correctes ? (o/N) " writechannel_okay
+  line;
+  case $writechannel_okay in
+  [oO]) echo -e "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rss version=\"2.0\">\n<channel>\n<title>$2</title>\n<link>$3</link>\n<description>$4</description><image><title /><url>$7</url><link>$3</link></image>\n\n</channel>\n</rss>"> /tmp/`echo $1`.xml; #Ecriture de la trame principale
+        echo -e "\nname%$2% ftp%$5% http%$3% file%$1.xml% user%$6% logo%$7% path%$8%" >> $folder/streams;
+        sed -i '/^$/d' $folder/streams;
+        echo "5 secondes avant envoi, Ctrl+C pour annuler."
+        echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
+        echo "Connexion pour envoi..."
+        envoyer 1 "$6" "$5" "$1.xml" "$8"; #send-ftp
+        echo "Flux \"$2\" créé et uploadé avec succès !";
+        sleep 3; ;;
+
+  ''|[nN]) writechannel_one="$1" ; writechannel_two="$2" ; writechannel_three="$3" ; writechannel_four="$4" ; writechannel_five="$5" ; writechannel_six="$6" ; writechannel_seven="$7" ; writechannel_eight="$8" ; #correction demandée
+      echo -e "Correction :\n1. Nom de fichier\n2. Titre\n3. URL\n4. Description\n5. FTP\n6. Utilisateur FTP\n7. Logo\n8. Chemin FTP"
+      read -p "Votre choix : " writechannel_correc
+      line;
+      case $writechannel_correc in
+        '1') writechannel_one=`modify | tail -n 1` ;;
+        '2') writechannel_two=`modify | tail -n 1` ;;
+        '3') writechannel_three=`modify | tail -n 1` ;;
+        '4') writechannel_four=`modify | tail -n 1` ;;
+        '5') writechannel_five=`modify | tail -n 1` ;;
+        '6') writechannel_six=`modify | tail -n 1` ;;
+        '7') writechannel_seven=`modify | tail -n 1` ;;
+        '8') writechannel_eight=`modify | tail -n 1` ;;
+        *) echo "Erreur" ;;
+      esac
+      writechannel "$writechannel_one" "$writechannel_two" "$writechannel_three" "$writechannel_four" "$writechannel_five" "$writechannel_six" "$writechannel_seven" "$writechannel_eight" ;; # erreur ou vérification
+
+  *) echo "Réponse incorrecte." ; sleep 1 ; writechannel "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8"; ;; #cas d'erreur
+  esac
+}
+
+function setchannel() # (file) from createstream or addstream
+{
+  read -p "Titre du flux : " setchannel_titre
+  read -p "URL du site : " setchannel_url
+  read -p "Description du flux : " setchannel_description
+  read -p "Serveur FTP : " setchannel_ftp
+  read -p "Nom d'utilisateur pour le serveur FTP : " setchannel_user
+  read -p "URL du logo : " setchannel_logo
+  read -p "Chemin FTP (Sans espace. Indiquer / si pas de dossier): " setchannel_path
+  if [ $# == '1' ] ; then #création du flux
+    writechannel "$1" "$setchannel_titre" "$setchannel_url" "$setchannel_description" "$setchannel_ftp" "$setchannel_user" "$setchannel_logo" "$setchannel_path";
+  else #ajout de flux pour gestion
+    echo -e "\nname%$setchannel_titre% ftp%$setchannel_ftp% http%$setchannel_url% file%$1.xml% user%$setchannel_user% logo%$setchannel_logo% path%$setchannel_path%" >> $folder/streams;
+    sed -i '/^$/d' $folder/streams;
+    echo "Flux \"$setchannel_titre\" ajouté !"
+    sleep 3;
+  fi
+}
+
+function createstream() # from submenu2-option 1
+{
+  read -p "Nom du fichier (sans extension) : " createstream_file
+  if [ ! -z "$createstream_file" ] ; then
+    setchannel "$createstream_file";
+  else
+    createstream;
+  fi
+}
+
+function addstream() # from submenu2-option 2
+{
+  line;
+  read -p "Nom du fichier (sans extension) : " addstream_file
+  if [ ! -z "$addstream_file" ] ; then
+    setchannel "$addstream_file" 1; #remplit le fichier streams
+  else
+    addstream; #recommencer si nom de fichier vide
+  fi
+}
+
+function deletestream() # from submenu2-option 3
+{
+  line;
+  sed -i '/^$/d' $folder/streams;
+  streamlist;
+  line;
+  read -p "Flux à supprimer : " deletestream_todel
+  deletestream_server=`more $folder/streams | head -n $deletestream_todel | tail -n 1 | cut -d % -f 4` #recupere adresse serveur
+  deletestream_file=`more $folder/streams | head -n $deletestream_todel | tail -n 1 | cut -d % -f 8` #recupere nom de fichier
+  deletestream_user=`more $folder/streams | head -n $deletestream_todel | tail -n 1 | cut -d % -f 10` #recupere utilisateur
+  deletestream_path=`more $folder/streams | head -n $deletestream_todel | tail -n 1 | cut -d % -f 14` #recupere chemin serveur
+  cd /tmp #repertoire de travail
+  echo "5 secondes avant envoi, Ctrl+C pour annuler."
+  echo "5" ; sleep 1 ; echo "4" ; sleep 1 ; echo "3" ; sleep 1 ; echo "2" ; sleep 1 ; echo "1" ; sleep 1 ; echo "0" ;
+  echo "Connexion pour envoi..." ;
+  envoyer 2 "$deletestream_user" "$deletestream_server" "$deletestream_file" "$deletestream_path"; #remove-ftp
+  sed -i "`echo $deletestream_todel`d" $folder/streams ;
+  echo "Flux supprimé" ;
+  sleep 3 ;
+}
+
+function forgetstream() #from submenu2-option 4
+{
+  line;
+  sed -i '/^$/d' $folder/streams;
+  streamlist;
+  read -p "Flux à oublier : " forgetstream_toforget
+  forgetstream_name=`more $folder/streams | head -n $forgetstream_toforget | tail -n 1 | cut -d % -f 2` #recupere nom
+  read -p "Etes-vous sûr de vouloir oublier \"$forgetstream_name\" ? (o/N) " forgetstream_okay
+  case $forgetstream_okay in
+    [oO]) sed -i "`echo $forgetstream_toforget`d" $folder/streams ;
+          echo "Flux \"$forgetstream_name\" oublié !"; sleep 3; ;;
+    ''|[nN]) return 0; ;;
+  esac
+}
+
+
+
+#menus :
+function submenu1() #from menu-option 1
+{
+  line;
+  echo -e "\033[1;34;40m...................................:Articles:...................................\033[0;34m"
+  line;
+  if [ $nb_stream != '0' ] ; then
+    streamlist;
+    line;
+    read -p "Flux concerné : " submenu1_flux ;
+    line;
+    echo -e "1. Ecrire un article\n2. Supprimer un article\n3. Annuler" ;
+    read -p "Votre choix : " submenu1_todo ;
+    if [ $submenu1_todo == '3' ] ; then return 0; fi
+    line;
+    manage_article $submenu1_todo $submenu1_flux;
+  else
+    echo "Il n'y a pas encore de flux. Il faut en créer un.";
+    sleep 3;
+  fi
+}
+
+function submenu2() #from menu-option 2
+{
+  line;
+  echo -e "\033[1;32;40m.....................................:Flux:.....................................\033[0;32m"
+  line;
+  echo -e "1. Créer un flux\n2. Ajouter un flux déjà existant\n3. Supprimer un flux\n4. Oublier un flux\n5. Annuler" ;
+  read -p "Votre choix : " submenu2_todo ;
+  if [ $submenu2_todo == '5' ] ; then
+    return 0;
+  elif [ $submenu2_todo == '4' ] ; then
+    clear;
+    forgetstream;
+  elif [ $submenu2_todo == '3' ] && [ $nb_stream != '0' ] ; then
+    clear;
+    deletestream;
+    line;
+  elif [ $submenu2_todo == '3' ] && [ $nb_stream == '0' ] ; then
+    echo "Il n'y a pas encore de flux !";
+    sleep 2;
+    line;
+    clear;
+    submenu2;
+  elif [ $submenu2_todo == '2' ] ; then
+    clear;
+    addstream;
+  elif [ $submenu2_todo == '1' ] ; then
+    clear;
+    createstream;
+    line;
+  else
+    echo "Réponse invalide !";
+    sleep 2;
+    line;
+    submenu2;
+  fi
+}
+
+function menu() #main
+{
+  clear;
+  nb_stream=$((`wc -l $folder/streams | cut -d " " -f 1`)) #nombre de flux
+  line;
+  echo -e "\033[1;31;40m................................:Menu Principal:................................\033[0;31m"
+  line;
+  echo -e "1. Gérer les articles\n2. Gérer les flux\n3. Quitter"
+  read -p "Votre choix : " menu_menu
+  line;
+  case $menu_menu in
+    '1') clear; submenu1; ;;
+    '2') clear; submenu2; ;;
+    '3') clear; exit; ;;
+    *) echo "Réponse incorrecte." ; sleep 1 ; menu; ;;
+  esac
+  rm /tmp/*.xml;
+  menu;
+}
+
+function update()
+{
+  echo "Recherche de version plus récente..."
+  cd /tmp
+  wget -q -O 'update' 'https://raw.github.com/theCmaker/shell/master/rss-manager/update';
+  update_last_version=`more update | cut -sd ":" -f 1 | tail -n 1`
+  update_current_version="2.2"
+  if [ `echo $update_last_version | cut -c 1` -gt `echo $update_current_version | cut -c 1` ] ; then
+    wget -q -O '/tmp/rss-manager.tar.gz' 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xzf rss-manager.tar.gz;
+    chmod 777 /tmp/install;
+    /tmp/install $folder ;
+  elif [ `echo $update_last_version | cut -c 3` -gt `echo $update_current_version | cut -c 3` ] ; then
+    wget -q -O '/tmp/rss-manager.tar.gz' 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
+    tar -xzf rss-manager.tar.gz;
+    chmod 777 /tmp/install;
+    /tmp/install $folder ;
+  else
+    echo "La dernière version disponible est déjà installée.";
+  fi
+}
+
+
+folder="/opt/lampp/htdocs/tests/rss_files" # dossier d'installation
+nb_stream=$((`wc -l $folder/streams | cut -d " " -f 1`)) #nombre de flux
+
+if [ $# == 1 ] ; then # arguments à l'appel
+  case $1 in
+    '-a') clear; submenu1; clear; ;;
+    '-l') streamlist; read -p "Appuyer sur une touche pour continuer. " i; exit; ;;
+    '-f') clear; submenu2; clear; ;;
+    '--update') clear; update; sleep 3; clear; exit; ;;
+    '--version') echo "version" "2.2"; exit;;
+    *) echo "Invalid argument $1 !";;
+  esac
+elif [ $# == 0 ] ; then #appel simple
+  menu;
+else
+  echo "Too many arguments !"
+fi
