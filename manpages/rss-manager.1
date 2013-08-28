@@ -2,7 +2,7 @@
 .SH NOM
 rss-manager \- Gérer des flux RSS.
 .SH SYNOPSIS
-\fBrss-manager\fP [\fB\-a\fP|\fB\-f\fP|\fB\-l\fP|\fB\--update\fP\|\fB\--version\fP\|]
+\fBrss-manager\fP [\fB\-a\fP|\fB\-f\fP|\fB\-l\fP|\fB\--update\fP|\fB\--version\fP\|]
 .SH DESCRIPTION
 .\" Add any additional description here
 .PP
@@ -11,7 +11,7 @@ On peut ne pas donner de paramètre.
 Les fichiers .xml sont placés dans un dossier "rss" à la racine du point de connexion FTP. Il est créé si nécessaire.
 Toutes les informations concernant les flux (excepté le mot de passe FTP) sont stockées dans le fichier "streams".
 .PP
-ATTENTION : si les fichiers existent, leur contenu est effacé.
+ATTENTION : si les fichiers existent, leur contenu est effacé. rss-manager requiert une connexion internet et utilise les commandes ftp et wget.
 .SH EXEMPLES
 .TP  \w'rss-manager\ 'u
 \fBrss-manager \-a\fP
