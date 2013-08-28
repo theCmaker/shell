@@ -338,7 +338,7 @@ function update()
   cd /tmp
   wget -rq https://raw.github.com/theCmaker/shell/master/rss-manager/update;
   update_last_version=`more update | cut -sd ":" -f 1 | tail -n 1`
-  update_current_version="x"
+  update_current_version="2.0"
   if [ `echo $update_last_version | cut -c 1` -gt `echo $update_current_version | cut -c 1` ] ; then
     wget -rq 'https://github.com/theCmaker/shell/blob/master/rss-manager/rss-manager.tar.gz?raw=true';
     tar -xzf rss-manager.tar.gz*;
@@ -362,7 +362,7 @@ if [ $# == 1 ] ; then # arguments à l'appel
     '-l') streamlist; read -p "Appuyer sur une touche pour continuer. " i; exit; ;;
     '-f') clear; submenu2; clear; ;;
     '--update') clear; update; sleep 3; clear; exit; ;;
-    '--version') echo "version" "x"; exit;;
+    '--version') echo "version" "2.0"; exit;;
     *) echo "Invalid argument $1 !";;
   esac
 elif [ $# == 0 ] ; then #appel simple
