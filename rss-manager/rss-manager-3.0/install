@@ -1,0 +1,24 @@
+#! /bin/bash
+if [ $# == '1' ] ; then #mise à jour
+  sed -i 's/name%.*% ftp%.*% http%.*% file%.*% user%.*% logo%.*\....[.%|%]$/& path%rss%/' $1/streams # ajout du chemin pour les anciennes versions
+  list=`ls /tmp/rss-manager | sed "/^streams/d"`;
+  cd /tmp/rss-manager
+  sudo cp $list $1;
+  cd $1;
+  sudo chmod -R 777 $list;
+  sudo sed -i "/^folder=*/cfolder='$1'" $1/rss-manager; #inscrit l'emplacement'
+  mv rss-manager.1.gz /usr/share/man/man1; #copie/met à jour la page de manuel
+else # remplacement intégral ou premiere installation
+  read -p "Dossier d'installation (chemin absolu) : " path;
+  sudo cp -r rss-manager $path;
+  sudo chmod -R 777 $path/rss-manager;
+  sudo sed -i "/^folder=*/cfolder='$path/rss-manager'" $path/rss-manager/rss-manager; #inscrit l'emplacement'
+  mv rss-manager.1.gz /usr/share/man/man1; #copie/met à jour la page de manuel
+fi
+echo "Fichiers copiés avec succès !"
+sleep 2
+if [ `more ~/.bashrc | grep rss-manager | wc -l` == '0' ] ; then #première installation
+  echo "alias rss-manager='$path/rss-manager/rss-manager'">> ~/.bashrc;
+  echo "L'alias \"rss-manager\" a été créé. Il sera utilisable au prochain lancement du terminal.";
+  sleep 2;
+fi
