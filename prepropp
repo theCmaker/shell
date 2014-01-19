@@ -1,0 +1,50 @@
+#! /bin/bash
+
+#fonctions
+
+function makeheader ()
+{
+  read -p "Descriptif du header : " header
+  header="`echo $header | tr '[a-z]' '[A-Z]'`_H__"
+  header="`echo $header | tr ' ' '_'`"
+  echo -e "#ifndef $header\n#define $header\n#endif" > $*
+}
+
+#main
+
+if [ $# == '0' ]; then
+  read -p "Nom du fichier : " name
+else
+  name=$1
+fi
+
+# Pose éventuelle d'extension
+if [ `tail -c 4 <<<$name` != 'cpp' ]; then
+  name=`echo "$name.cpp"`;
+fi
+
+# Ecriture des headers standard
+echo -e "#include <iostream>\n#include <vector>\n#include <string>\n#include <cmath>\n#include <fstream>\n#include <cstdlib>\n#include <ctime>"> $name
+
+# Arguments - headers supplémentaires : -l
+arg='first' # Curseur 'argument' pour permettre l'inclusion du header éponyme
+if [ $# -gt 1 ]; then
+  for i in $* ;  do 
+  if [ $arg == 'next' ]; then  
+    # Pose éventuelle d'extension
+    if [ ${i: -4} != '.hpp' ]; then
+      i=`echo "$i.hpp"`;
+    fi;
+    if [ ! -f $i ]; then
+      echo "Attention, le header $i va être créé !";
+      makeheader $i ;
+    fi;
+    # Ecriture du header supplémentaire
+    echo "#include \"$i\" ">> $name; 
+  else 
+  arg='next';
+  fi;
+  done;
+fi
+
+echo -e "\nusing namespace std;\n\nint main (int argc, char ** argv)\n{\n\n  return 0;\n}">> $name
