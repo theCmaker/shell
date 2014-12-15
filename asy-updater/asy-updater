@@ -1,0 +1,114 @@
+#!/bin/bash
+
+
+#compiler
+cc=asy
+#files settings
+statusfile=.asyStatus
+logfile=.asyUpdaterLog
+tmpfile=.analysis.tmp
+input_extension=asy
+output_extension=pdf
+tmp_prefix=tmp_
+
+function print_help() {
+  echo 'AsyUpdater v. 1.1';
+  echo 'Usage: asy-updater [-a] [-c COMPILER] [-i IN_EXT] [-o OUT_EXT]';
+  echo '       asy-updater -h';
+  echo 'Options:';
+  echo '  -a         render all the files';
+  echo '  -c         choose a compiler';
+  echo '  -i IN_EXT  set the input file format';
+  echo '  -o OUT_EXT set the output file format';
+  echo '  -h         display this help';
+}
+
+#flags and return values
+pending_operations=0;
+update_all=0;
+ret_val=1;
+
+#options
+while getopts "ahc:i:o:" opt
+do
+  case $opt in
+    a) update_all=1;;
+    c) cc=$OPTARG;;
+    i) input_extension=$OPTARG;;
+    o) output_extension=$OPTARG;;
+    h) print_help; exit;;
+    *) echo "unknown or invalid argument"; exit 1;;
+  esac
+done
+shift $(( $OPTIND - 1 ))
+
+
+#saving the digests and file names to the temp file
+if [[ -f $tmpfile ]] ; then
+  rm $tmpfile
+fi
+#ignoring defaultfilename lines to avoid useless recompiling
+for i in *.$input_extension; do
+  cat $i | grep -v defaultfilename | shasum | sed "s/\ \+-/#$i/g" >> $tmpfile
+done
+#shasum *.$input_extension 2> /dev/null | sed 's/\ \+-/#/g' > $tmpfile
+#reading the file
+analysis=`cat $tmpfile`
+
+#updating log file
+echo [`date +"%F %T"`] - Program started. >> $logfile
+
+if [[ (! -f $statusfile) ]]; then
+  #status file does not exist
+  echo [`date +"%F %T"`] - $statusfile does not exist, creating it. >> $logfile
+  #creating status file
+  mv $tmpfile $statusfile
+fi
+
+#for each couple (digest#filename)
+for i in $analysis ; do
+  #separating the digest and the filename
+  digest=`echo $i | cut -d '#' -f 1`
+  file=`echo $i | cut -d '#' -f 2 | tr -d '#'`
+  if [[ ("`cat $statusfile | grep $file | cut -d '#' -f 1`" != "$digest")
+        || (! -f `echo $file | sed "s/\(.\+\.\)$input_extension/\1$output_extension/"`)
+        || ($update_all == 1) ]]; then
+    #the file has not been processed or has a different digest or updating all is requested
+    #searching for another old file with the same digest (i.e. a file that has the same content but a different name: naming order has changed)
+    other=`cat $statusfile | grep $digest | cut -d '#' -f 2 | sed "s/\(.\+\.\)$input_extension/\1$output_extension/"`
+    if [[ (! -z "$other") && (-f $other ) && ($update_all == 0) ]]; then
+      #an old copy has been found
+      new_name=`echo $tmp_prefix$file | sed "s/\(.\+\.\)$input_extension/\1$output_extension/"`
+      echo [`date +"%F %T"`] - File $file has already been rendered as $other, preparing renaming operation. >> $logfile
+      echo [`date +"%F %T"`] - Renaming $other into $new_name. >> $logfile
+      #changing the name of the existing render into tmp_<final_name>
+      mv $other  $new_name
+      #raising operations flag
+      pending_operations=1
+    else
+      echo "Rendering $file"
+      echo [`date +"%F %T"`] - Rendering $file >> $logfile
+      $cc $file
+    fi
+    #set return value to 0 : at least one file has been rendered or changed
+    ret_val=0
+  fi
+done
+if [[ $pending_operations -gt 0 ]]; then
+  echo "Renaming operations..."
+  echo [`date +"%F %T"`] - There are pending renaming operations >> $logfile
+  for i in $tmp_prefix*.$output_extension ; do
+    new_name=`echo $i | sed "s/$tmp_prefix//"`
+    mv $i $new_name
+    echo [`date +"%F %T"`] - Renaming $i into $new_name. Renaming operation complete. >> $logfile
+  done
+fi
+
+#updating status file
+if [[ (-f $tmpfile) ]]; then
+  mv $tmpfile $statusfile
+fi
+
+echo [`date +"%F %T"`] - Program ended without error. >> $logfile
+
+exit $ret_val
