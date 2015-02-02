@@ -47,11 +47,10 @@ shift $(( $OPTIND - 1 ))
 if [[ -f $tmpfile ]] ; then
   rm $tmpfile
 fi
-#ignoring defaultfilename lines to avoid useless recompiling
+#ignoring "defaultfilename" lines to avoid useless recompiling
 for i in *.$input_extension; do
-  cat $i | grep -v defaultfilename | shasum | sed "s/\ \+-/#$i/g" >> $tmpfile
+  cat $i | grep -v defaultfilename | md5sum | sed "s/\ \+-/#$i/g" >> $tmpfile
 done
-#shasum *.$input_extension 2> /dev/null | sed 's/\ \+-/#/g' > $tmpfile
 #reading the file
 analysis=`cat $tmpfile`
 
